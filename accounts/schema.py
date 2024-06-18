@@ -61,3 +61,17 @@ class Mutation(graphene.ObjectType):
 
 
 schema = graphene.Schema(query=Query, mutation=Mutation)
+
+
+# mutation{
+#   createEnrollment(courseId: 1) {
+#     enrollment{
+#       course {
+#         id
+#         name
+#       }
+#       enrollmentDate
+      
+#     }
+#   }
+# }
