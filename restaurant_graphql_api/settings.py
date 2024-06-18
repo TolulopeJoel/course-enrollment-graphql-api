@@ -33,6 +33,7 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     "restaurant.apps.RestaurantConfig",
+    "courses.apps.CoursesConfig",
 
     "django.contrib.admin",
     "django.contrib.auth",
