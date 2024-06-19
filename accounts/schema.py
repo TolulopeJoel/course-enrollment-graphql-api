@@ -9,7 +9,7 @@ from graphql_jwt.shortcuts import create_refresh_token, get_token
 class UserType(DjangoObjectType):
     class Meta:
         model = get_user_model()
-        fields = ['id', 'username', 'email']
+        fields = ['id', 'email']
 
 
 class Query(graphene.ObjectType):
