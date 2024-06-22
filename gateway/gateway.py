@@ -13,13 +13,17 @@ USER_MANAGEMENT_URL = "http://127.0.0.1:8000/graphql/"
 COURSE_MANAGEMENT_URL = "http://127.0.0.1:5000/graphql"
 
 
-async def fetch_from_service(url: str, query: str, variables: dict):
+async def fetch_from_service(url: str, query: str, variables: dict = None, headers: dict = None):
     """
     Fetches data from a microservice using a POST request with the
     provided URL, query, and variables.
     """
     async with ClientSession() as session:
-        async with session.post(url, json={"query": query, "variables": variables}) as response:
+        async with session.post(
+            url,
+            json={"query": query, "variables": variables},
+            headers=headers
+        ) as response:
             if response.status != 200:
                 raise HTTPException(
                     status_code=response.status,
@@ -40,10 +44,10 @@ class User:
 
 @strawberry.type
 class Course:
-    id: str
+    id: int
     title: str
     description: str
-    authorId: str
+    authorId: int
 
 
 @strawberry.type
@@ -52,6 +56,17 @@ class AuthResponse:
     refreshToken: str
     payload: json_type
     refreshExpiresIn: int
+
+
+@strawberry.type
+class CreateUserResponse:
+    user: User
+
+
+@strawberry.type
+class CreateCourseResponse:
+    course: Course
+
 
 @strawberry.type
 class Query:
@@ -68,7 +83,7 @@ class Query:
             }
         }
         """
-        response = await fetch_from_service(USER_MANAGEMENT_URL, query, {})
+        response = await fetch_from_service(USER_MANAGEMENT_URL, query)
         return [User(**user) for user in response["users"]]
 
     @strawberry.field
@@ -96,14 +111,13 @@ class Query:
             }
         }
         """
-        response = await fetch_from_service(COURSE_MANAGEMENT_URL, query, {})
-
+        response = await fetch_from_service(COURSE_MANAGEMENT_URL, query)
         return [Course(**course) for course in response["allCourses"]]
 
     @strawberry.field
     async def course(self, info, id: str) -> Optional[Course]:
         query = """
-        query($id: ID!) {
+        query($id: Int!) {
             course(id: $id) {
                 id
                 title
@@ -113,7 +127,7 @@ class Query:
         }
         """
         response = await fetch_from_service(COURSE_MANAGEMENT_URL, query, {"id": id})
-        return Course(**response["course"]) if response.get("course") else None
+        return Course(**response["course"])
 
 
 @strawberry.type
