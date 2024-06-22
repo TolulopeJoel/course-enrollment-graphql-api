@@ -1,8 +1,10 @@
+from typing import List, Optional
+
+import strawberry
+from aiohttp import ClientSession
 from fastapi import FastAPI, HTTPException
 from strawberry.fastapi import GraphQLRouter
-from aiohttp import ClientSession
-import strawberry
-from typing import List, Optional
+from strawberry.scalars import JSON as json_type
 
 app = FastAPI()
 
@@ -43,6 +45,13 @@ class Course:
     description: str
     authorId: str
 
+
+@strawberry.type
+class AuthResponse:
+    token: str
+    refreshToken: str
+    payload: json_type
+    refreshExpiresIn: int
 
 @strawberry.type
 class Query:
@@ -107,7 +116,26 @@ class Query:
         return Course(**response["course"]) if response.get("course") else None
 
 
-schema = strawberry.Schema(query=Query)
+@strawberry.type
+class Mutation:
+    @strawberry.mutation
+    async def token_auth(self, info, username: str, password: str) -> AuthResponse:
+        query = """
+        mutation($username: String!, $password: String!) {
+            tokenAuth(username: $username, password: $password) {
+                token
+                payload
+                refreshToken
+                refreshExpiresIn
+            }
+        }
+        """
+        variables = {"username": username, "password": password}
+        response = await fetch_from_service(USER_MANAGEMENT_URL, query, variables)
+        return AuthResponse(**response["tokenAuth"])
+
+
+schema = strawberry.Schema(query=Query, mutation=Mutation)
 graphql_app = GraphQLRouter(schema)
 
 app.include_router(graphql_app, prefix="/graphql")
