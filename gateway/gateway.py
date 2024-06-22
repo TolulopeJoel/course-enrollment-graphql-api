@@ -148,6 +148,50 @@ class Mutation:
         response = await fetch_from_service(USER_MANAGEMENT_URL, query, variables)
         return AuthResponse(**response["tokenAuth"])
 
+    @strawberry.mutation
+    async def create_user(self, info, email: str, password: str) -> CreateUserResponse:
+        query = """
+        mutation($email: String!, $password: String!) {
+            createUser(email: $email, password: $password) {
+                user {
+                    id
+                    email
+                }
+            }
+        }
+        """
+        variables = {"email": email, "password": password}
+        response = await fetch_from_service(USER_MANAGEMENT_URL, query, variables)
+        return CreateUserResponse(user=User(**response["createUser"]["user"]))
+
+
+    @strawberry.mutation
+    async def refresh_token(self, info, refresh_token: str) -> AuthResponse:
+        query = """
+        mutation($refreshToken: String!) {
+            refreshToken(refreshToken: $refreshToken) {
+                token
+                payload
+                refreshToken
+                refreshExpiresIn
+            }
+        }
+        """
+        response = await fetch_from_service(USER_MANAGEMENT_URL, query, {"refreshToken": refresh_token})
+        return AuthResponse(**response["refreshToken"])
+
+    @strawberry.mutation
+    async def verify_token(self, info, token: str) -> json_type:
+        query = """
+        mutation($token: String!) {
+            verifyToken(token: $token) {
+                payload
+            }
+        }
+        """
+        response = await fetch_from_service(USER_MANAGEMENT_URL, query, {"token": token})
+        return response["verifyToken"]
+
 
 schema = strawberry.Schema(query=Query, mutation=Mutation)
 graphql_app = GraphQLRouter(schema)
