@@ -44,7 +44,7 @@ class User:
 
 @strawberry.type
 class Course:
-    id: int
+    id: str
     title: str
     description: str
     authorId: int
@@ -117,7 +117,7 @@ class Query:
     @strawberry.field
     async def course(self, info, id: str) -> Optional[Course]:
         query = """
-        query($id: Int!) {
+        query($id: String!) {
             course(id: $id) {
                 id
                 title
@@ -164,6 +164,27 @@ class Mutation:
         response = await fetch_from_service(USER_MANAGEMENT_URL, query, variables)
         return CreateUserResponse(user=User(**response["createUser"]["user"]))
 
+    @strawberry.mutation
+    async def create_course(self, info, title: str, description: str, author_id: int) -> CreateCourseResponse:
+        query = """
+        mutation($title: String!, $description: String!, $authorId: Int!) {
+            createCourse(title: $title, description: $description, authorId: $authorId) {
+                course {
+                    id
+                    title
+                    description
+                    authorId
+                }
+            }
+        }
+        """
+        variables = {
+            "title": title,
+            "description": description,
+            "authorId": author_id
+        }
+        response = await fetch_from_service(COURSE_MANAGEMENT_URL, query, variables)
+        return CreateCourseResponse(course=Course(**response["createCourse"]["course"]))
 
     @strawberry.mutation
     async def refresh_token(self, info, refresh_token: str) -> AuthResponse:
