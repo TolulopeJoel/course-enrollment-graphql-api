@@ -16,13 +16,18 @@ COURSE_MANAGEMENT_URL = "http://127.0.0.1:5000/graphql"
 async def fetch_from_service(url: str, query: str, variables: dict = None, headers: dict = None):
     """
     Fetches data from a microservice using a POST request with the
-    provided URL, query, and variables.
+    provided URL, query, variables, and headers.
     """
     async with ClientSession() as session:
+        request_headers = {
+            "Content-Type": "application/json",
+            **(headers or {})
+        }
+
         async with session.post(
             url,
             json={"query": query, "variables": variables},
-            headers=headers
+            headers=request_headers
         ) as response:
             if response.status != 200:
                 raise HTTPException(
@@ -44,7 +49,7 @@ class User:
 
 @strawberry.type
 class Course:
-    id: int
+    id: str
     title: str
     description: str
     authorId: int
@@ -83,7 +88,8 @@ class Query:
             }
         }
         """
-        response = await fetch_from_service(USER_MANAGEMENT_URL, query)
+        headers = {"Authorization": info.context["request"].headers.get("Authorization")}
+        response = await fetch_from_service(USER_MANAGEMENT_URL, query, headers=headers)
         return [User(**user) for user in response["users"]]
 
     @strawberry.field
@@ -96,7 +102,8 @@ class Query:
             }
         }
         """
-        response = await fetch_from_service(USER_MANAGEMENT_URL, query, {})
+        headers = {"Authorization": info.context["request"].headers.get("Authorization")}
+        response = await fetch_from_service(USER_MANAGEMENT_URL, query, headers=headers)
         return User(**response["whoami"]) if response.get("whoami") else None
 
     @strawberry.field
@@ -117,7 +124,7 @@ class Query:
     @strawberry.field
     async def course(self, info, id: str) -> Optional[Course]:
         query = """
-        query($id: Int!) {
+        query($id: String!) {
             course(id: $id) {
                 id
                 title
@@ -164,6 +171,28 @@ class Mutation:
         response = await fetch_from_service(USER_MANAGEMENT_URL, query, variables)
         return CreateUserResponse(user=User(**response["createUser"]["user"]))
 
+    @strawberry.mutation
+    async def create_course(self, info, title: str, description: str, author_id: int) -> CreateCourseResponse:
+        query = """
+        mutation($title: String!, $description: String!, $authorId: Int!) {
+            createCourse(title: $title, description: $description, authorId: $authorId) {
+                course {
+                    id
+                    title
+                    description
+                    authorId
+                }
+            }
+        }
+        """
+        variables = {
+            "title": title,
+            "description": description,
+            "authorId": author_id
+        }
+        headers = {"Authorization": info.context["request"].headers.get("Authorization")}
+        response = await fetch_from_service(COURSE_MANAGEMENT_URL, query, variables, headers)
+        return CreateCourseResponse(course=Course(**response["createCourse"]["course"]))
 
     @strawberry.mutation
     async def refresh_token(self, info, refresh_token: str) -> AuthResponse:
