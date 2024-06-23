@@ -88,7 +88,8 @@ class Query:
             }
         }
         """
-        response = await fetch_from_service(USER_MANAGEMENT_URL, query)
+        headers = {"Authorization": info.context["request"].headers.get("Authorization")}
+        response = await fetch_from_service(USER_MANAGEMENT_URL, query, headers=headers)
         return [User(**user) for user in response["users"]]
 
     @strawberry.field
@@ -101,7 +102,8 @@ class Query:
             }
         }
         """
-        response = await fetch_from_service(USER_MANAGEMENT_URL, query, {})
+        headers = {"Authorization": info.context["request"].headers.get("Authorization")}
+        response = await fetch_from_service(USER_MANAGEMENT_URL, query, headers=headers)
         return User(**response["whoami"]) if response.get("whoami") else None
 
     @strawberry.field
