@@ -16,13 +16,18 @@ COURSE_MANAGEMENT_URL = "http://127.0.0.1:5000/graphql"
 async def fetch_from_service(url: str, query: str, variables: dict = None, headers: dict = None):
     """
     Fetches data from a microservice using a POST request with the
-    provided URL, query, and variables.
+    provided URL, query, variables, and headers.
     """
     async with ClientSession() as session:
+        request_headers = {
+            "Content-Type": "application/json",
+            **(headers or {})
+        }
+
         async with session.post(
             url,
             json={"query": query, "variables": variables},
-            headers=headers
+            headers=request_headers
         ) as response:
             if response.status != 200:
                 raise HTTPException(
@@ -183,7 +188,8 @@ class Mutation:
             "description": description,
             "authorId": author_id
         }
-        response = await fetch_from_service(COURSE_MANAGEMENT_URL, query, variables)
+        headers = {"Authorization": info.context["request"].headers.get("Authorization")}
+        response = await fetch_from_service(COURSE_MANAGEMENT_URL, query, variables, headers)
         return CreateCourseResponse(course=Course(**response["createCourse"]["course"]))
 
     @strawberry.mutation
