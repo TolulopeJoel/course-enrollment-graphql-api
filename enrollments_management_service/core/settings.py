@@ -37,6 +37,10 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    # local apps
+    "enrollments.apps.EnrollmentsConfig",
+    # 3rd party apps
+    "graphene_django",
 ]
 
 MIDDLEWARE = [
