@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  gateway:
+    build: ./gateway
+    ports:
+      - "4001:4001"
+    environment:
+      - USER_MANAGEMENT_URL=http://user-management:8000/graphql/
+      - COURSE_MANAGEMENT_URL=http://course-management:3000/graphql
+      - ENROLLMENTS_MANAGEMENT_URL=http://enrollments-management:8001/graphql/
+    depends_on:
+      - user-management
+      - course-management
+      - enrollments-management
+
+  user-management:
+    build: ./user_management_service
+    ports:
+      - "8000:8000"
+
+  course-management:
+    build: ./course_management_service
+    ports:
+      - "3000:3000"
+
+  enrollments-management:
+    build: ./enrollments_management_service
+    ports:
+      - "8001:8001"
