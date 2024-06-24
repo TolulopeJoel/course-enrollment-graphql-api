@@ -8,9 +8,11 @@ from strawberry.scalars import JSON as json_type
 
 app = FastAPI()
 
-USER_MANAGEMENT_URL = "http://127.0.0.1:8000/graphql/"
+USER_MANAGEMENT_URL = "http://user-management:8000/graphql/"
 
-COURSE_MANAGEMENT_URL = "http://127.0.0.1:5000/graphql"
+COURSE_MANAGEMENT_URL = "http://course-management:3000/graphql"
+
+ENROLLMENTS_MANAGEMENT_URL = "http://enrollments-management:8001/graphql"
 
 
 async def fetch_from_service(url: str, query: str, variables: dict = None, headers: dict = None):
@@ -172,10 +174,10 @@ class Mutation:
         return CreateUserResponse(user=User(**response["createUser"]["user"]))
 
     @strawberry.mutation
-    async def create_course(self, info, title: str, description: str, author_id: int) -> CreateCourseResponse:
+    async def create_course(self, info, title: str, description: str) -> CreateCourseResponse:
         query = """
-        mutation($title: String!, $description: String!, $authorId: Int!) {
-            createCourse(title: $title, description: $description, authorId: $authorId) {
+        mutation($title: String!, $description: String!) {
+            createCourse(title: $title, description: $description) {
                 course {
                     id
                     title
@@ -188,7 +190,6 @@ class Mutation:
         variables = {
             "title": title,
             "description": description,
-            "authorId": author_id
         }
         headers = {"Authorization": info.context["request"].headers.get("Authorization")}
         response = await fetch_from_service(COURSE_MANAGEMENT_URL, query, variables, headers)

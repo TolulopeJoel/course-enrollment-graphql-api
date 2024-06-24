@@ -28,11 +28,10 @@ class CreateCourse(graphene.Mutation):
     class Arguments:
         title = graphene.String()
         description = graphene.String()
-        author_id = graphene.Int()
 
     course = graphene.Field(CourseType)
 
-    def mutate(self, info, title, description, author_id):
+    def mutate(self, info, title, description):
         token = info.context.headers.get('Authorization')
 
         if not token or not validate_token(token):
@@ -45,7 +44,7 @@ class CreateCourse(graphene.Mutation):
         course = CourseModel(
             title=title,
             description=description,
-            author_id=author_id
+            author_id=user["id"]
         )
         db_session.add(course)
         db_session.commit()
