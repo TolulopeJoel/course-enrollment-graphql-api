@@ -1,7 +1,6 @@
 import requests
 
-API_GATEWAY_URL = "http://localhost:4001/graphql"
-
+API_GATEWAY_URL = "http://gateway:4001/graphql"
 
 def check_user_exists(token):
     query = """
