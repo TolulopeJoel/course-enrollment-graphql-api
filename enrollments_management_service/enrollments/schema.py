@@ -4,7 +4,7 @@ from .models import Enrollment
 from .utilities import verify_token, get_user_from_token
 import requests
 
-API_GATEWAY_URL = "http://127.0.0.1:4001/graphql"
+API_GATEWAY_URL = "http://gateway:4001/graphql"
 
 
 class EnrollmentType(DjangoObjectType):
