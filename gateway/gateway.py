@@ -1,3 +1,4 @@
+import datetime
 from typing import List, Optional
 
 import strawberry
@@ -12,7 +13,7 @@ USER_MANAGEMENT_URL = "http://user-management:8000/graphql/"
 
 COURSE_MANAGEMENT_URL = "http://course-management:3000/graphql"
 
-ENROLLMENTS_MANAGEMENT_URL = "http://enrollments-management:8001/graphql"
+ENROLLMENTS_MANAGEMENT_URL = "http://enrollments-management:8001/graphql/"
 
 
 async def fetch_from_service(url: str, query: str, variables: dict = None, headers: dict = None):
@@ -50,11 +51,19 @@ class User:
 
 
 @strawberry.type
+@strawberry.type
 class Course:
     id: str
     title: str
     description: str
     authorId: int
+
+@strawberry.type
+class Enrollment:
+    id: int
+    courseId: int
+    userId: int
+    enrollmentDate: datetime.datetime
 
 
 @strawberry.type
@@ -76,6 +85,11 @@ class CreateCourseResponse:
 
 
 @strawberry.type
+class CreateEnrollmentResponse:
+    enrollment: Enrollment
+
+
+@strawberry.type
 class Query:
     """
     Defines GraphQL queries that resolve to different microservices.
@@ -90,7 +104,8 @@ class Query:
             }
         }
         """
-        headers = {"Authorization": info.context["request"].headers.get("Authorization")}
+        headers = {
+            "Authorization": info.context["request"].headers.get("Authorization")}
         response = await fetch_from_service(USER_MANAGEMENT_URL, query, headers=headers)
         return [User(**user) for user in response["users"]]
 
@@ -104,7 +119,8 @@ class Query:
             }
         }
         """
-        headers = {"Authorization": info.context["request"].headers.get("Authorization")}
+        headers = {
+            "Authorization": info.context["request"].headers.get("Authorization")}
         response = await fetch_from_service(USER_MANAGEMENT_URL, query, headers=headers)
         return User(**response["whoami"]) if response.get("whoami") else None
 
@@ -122,6 +138,21 @@ class Query:
         """
         response = await fetch_from_service(COURSE_MANAGEMENT_URL, query)
         return [Course(**course) for course in response["allCourses"]]
+
+    @strawberry.field
+    async def enrollments(self, info) -> List[Enrollment]:
+        query = """
+        query {
+            enrollments{
+                id
+                courseId
+                userId
+                enrollmentDate
+            }
+        }
+        """
+        response = await fetch_from_service(ENROLLMENTS_MANAGEMENT_URL, query)
+        return [Enrollment(**enrollment) for enrollment in response["enrollments"]]
 
     @strawberry.field
     async def course(self, info, id: str) -> Optional[Course]:
@@ -191,9 +222,32 @@ class Mutation:
             "title": title,
             "description": description,
         }
-        headers = {"Authorization": info.context["request"].headers.get("Authorization")}
+        headers = {
+            "Authorization": info.context["request"].headers.get("Authorization")}
         response = await fetch_from_service(COURSE_MANAGEMENT_URL, query, variables, headers)
         return CreateCourseResponse(course=Course(**response["createCourse"]["course"]))
+
+    @strawberry.mutation
+    async def create_enrollment(self, info, courseId: int) -> CreateEnrollmentResponse:
+        query = """
+        mutation($courseId: Int!) {
+            createEnrollment(courseId: $courseId) {
+                enrollment {
+                    id
+                    userId
+                    courseId
+                    enrollmentDate
+                }
+            }
+        }
+        """
+        variables = {
+            "courseId": courseId,
+        }
+        headers = {
+            "Authorization": info.context["request"].headers.get("Authorization")}
+        response = await fetch_from_service(ENROLLMENTS_MANAGEMENT_URL, query, variables, headers)
+        return CreateEnrollmentResponse(enrollment=Enrollment(**response["createEnrollment"]["enrollment"]))
 
     @strawberry.mutation
     async def refresh_token(self, info, refresh_token: str) -> AuthResponse:
