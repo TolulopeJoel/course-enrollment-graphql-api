@@ -26,6 +26,7 @@ SECRET_KEY = "django-insecure-i70s3b2u8wlt@vv_aeszbt2d)32!&2cnqew5hkq$*z#h%joo@6
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+
 ALLOWED_HOSTS = ["*"]
 
 
@@ -127,6 +128,7 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# Authentication settings
 
 AUTHENTICATION_BACKENDS = [
     'graphql_jwt.backends.JSONWebTokenBackend',
@@ -149,3 +151,4 @@ GRAPHQL_JWT = {
     "JWT_SECRET_KEY": SECRET_KEY,
     "JWT_ALGORITHM": "HS256",
 }
+
