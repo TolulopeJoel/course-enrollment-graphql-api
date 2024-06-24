@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: enrollments-management
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: enrollments-management
+  template:
+    metadata:
+      labels:
+        app: enrollments-management
+    spec:
+      containers:
+      - name: enrollments-management
+        image: enrollments-management:latest
+        ports:
+        - containerPort: 8001
